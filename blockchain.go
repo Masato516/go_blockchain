@@ -11,6 +11,8 @@ import (
 
 const (
 	MINING_DIFFICULTY = 3
+	MINING_SENDER     = "THE BLOCKCHAIN"
+	MINING_REWARD     = 1.0
 )
 
 type Block struct {
@@ -57,14 +59,16 @@ func (b *Block) MarshalJSON() ([]byte, error) {
 }
 
 type Blockchain struct {
-	transactionPool []*Transaction
-	chain           []*Block
+	transactionPool   []*Transaction
+	chain             []*Block
+	blockchainAddress string // マイニング実行者のアドレス
 }
 
 // １つ目のブロックを作成
-func NewBlockchain() *Blockchain {
+func NewBlockchain(blockchainAddress string) *Blockchain {
 	b := &Block{}
 	bc := new(Blockchain)
+	bc.blockchainAddress = blockchainAddress
 	bc.CreateBlock(0, b.Hash())
 	return bc
 }
@@ -118,6 +122,15 @@ func (bc *Blockchain) ProofOfWork() int {
 	return nonce
 }
 
+func (bc *Blockchain) Mining() bool {
+	// 自分のアドレスをTransactionPoolに入れてから、ProofOfWork(nonceを求める)を行う
+	bc.AddTransaction(MINING_SENDER, bc.blockchainAddress, MINING_REWARD)
+	nonce := bc.ProofOfWork()
+	bc.CreateBlock(nonce, bc.LastBlock().Hash())
+	log.Println("action=mining, status=success")
+	return true
+}
+
 func (bc *Blockchain) Print() {
 	for i, block := range bc.chain {
 		fmt.Printf("%s Chain %d %s\n", strings.Repeat("=", 25), i, strings.Repeat("=", 25))
@@ -160,16 +173,16 @@ func init() {
 }
 
 func main() {
-	blockChain := NewBlockchain()
+	blockChain := NewBlockchain("My_Blockchain_Address!!!")
 	blockChain.Print()
 
-	nonce := blockChain.ProofOfWork()
 	blockChain.AddTransaction("A", "B", 2.01)
 	blockChain.AddTransaction("Khabib", "Mcgregor", 10.187)
-	blockChain.CreateBlock(nonce, blockChain.LastBlock().Hash())
+	blockChain.Mining()
 	blockChain.Print()
 
-	nonce = blockChain.ProofOfWork()
-	blockChain.CreateBlock(nonce, blockChain.LastBlock().Hash())
+	blockChain.Mining()
 	blockChain.Print()
+
+	fmt.Println(blockChain)
 }
