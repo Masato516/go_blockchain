@@ -131,6 +131,22 @@ func (bc *Blockchain) Mining() bool {
 	return true
 }
 
+// 引数のアドレスの仮想通貨の総額を返す
+func (bc *Blockchain) CalculateTotalAmount(blockchainAddress string) float32 {
+	var totalAmount float32 = 0.0
+	for _, b := range bc.chain {
+		for _, t := range b.transactions {
+			value := t.value
+			if blockchainAddress == t.recipientBlockchainAddress {
+				totalAmount += value
+			} else if blockchainAddress == t.sendBlockchainAddress {
+				totalAmount -= value
+			}
+		}
+	}
+	return totalAmount
+}
+
 func (bc *Blockchain) Print() {
 	for i, block := range bc.chain {
 		fmt.Printf("%s Chain %d %s\n", strings.Repeat("=", 25), i, strings.Repeat("=", 25))
@@ -173,16 +189,20 @@ func init() {
 }
 
 func main() {
-	blockChain := NewBlockchain("My_Blockchain_Address!!!")
+	blockChain := NewBlockchain("My_Blockchain_Minor_Address")
 	blockChain.Print()
 
-	blockChain.AddTransaction("A", "B", 2.01)
+	blockChain.AddTransaction("Gaethje", "Poirier", 2.01)
 	blockChain.AddTransaction("Khabib", "Mcgregor", 10.187)
 	blockChain.Mining()
 	blockChain.Print()
 
+	blockChain.AddTransaction("Chandler", "Oliveira", 2.01)
+	blockChain.AddTransaction("Khabib", "Mcgregor", 10.187)
 	blockChain.Mining()
 	blockChain.Print()
 
 	fmt.Println(blockChain)
+
+	fmt.Printf("My_Blockchain_Minor_Address: %.1f\n", blockChain.CalculateTotalAmount("My_Blockchain_Minor_Address"))
 }
